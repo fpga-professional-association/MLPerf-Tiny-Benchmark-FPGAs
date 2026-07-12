@@ -47,14 +47,57 @@ targeting ≥ 400 fps end-to-end is planned in
 Canonical record: [`results/agilex3-coredla/ph3_resnet8-cifar10-hyperram-onboard_20260711.json`](results/agilex3-coredla/ph3_resnet8-cifar10-hyperram-onboard_20260711.json)
 (bitstream SHA-256 `e0e363f2…`, full tool versions inside).
 
+#### FPGA resource utilization (measured build)
+
+Full-system fit of the `coredla_hyperram_ed` platform — CoreDLA engine + HyperRAM controller +
+JTAG control plane — on the A3CY100 (`top.fit.summary`, Quartus Prime Pro 26.1.0):
+
+| Resource | Used / available | Utilization |
+|---|---|---|
+| ALMs | 32,397 / 34,000 | **95 %** |
+| M20K RAM blocks | 228 / 262 | **87 %** |
+| Block memory bits | 4,133,008 / 5,365,760 | 77 % |
+| DSP blocks | 75 / 276 | 27 % |
+| Dedicated logic registers | 75,872 | — |
+| PLLs | 2 / 11 | 18 % |
+
+Performance in that footprint: **409.3 fps at 200.0 MHz = 2.05 fps/MHz** (engine rate, on-chip
+measured). Context from the implementation repo's build findings
+(`docs/coredla_agx3_build_findings.md`): **M20K is the binding wall on this die** — the untrimmed
+Performance-class DLA config needs 431 M20K vs the C100's 262 (164 %); the fitted DDR-free config
+standalone comes in at ALM 88 % / M20K 94 % / DSP 23 % with the DLA datapath closing timing at
+~343 MHz in DSP tensor mode, so the deployed 200 MHz build has thermal/timing headroom and DSPs
+to spare — the die's memory, not its arithmetic, is what's full.
+
+## MLPerf Tiny v1.4 comparison dashboard
+
+[`dashboard/mlperf_tiny_v1.4_dashboard.html`](dashboard/mlperf_tiny_v1.4_dashboard.html) — a
+self-contained (no-CDN, open-it-locally) interactive dashboard of the **22 official MLPerf Tiny
+v1.4 submissions** (efficiency frontier, latency + energy leaderboards, per-benchmark switching),
+with our measured Agilex 3 point plotted among them as a starred (★) research entry:
+**IC engine latency 2.44 ms** (1000 ÷ 409.3 fps, the dashboard's single-stream convention).
+
+Where that lands among the v1.4 FPGA entries on image classification: ahead of every closed-division
+FPGA IC submission (best: Andes AnDLA I370 at 3.87 ms on a Kintex-7); the only faster FPGA point is
+the Versal VCK190 DPU (0.54 ms) — an open-division ResNet-18 run on a much larger device. Caveats
+stated on the plot itself: our point is engine-rate-derived, measured on-board but **not an MLPerf
+submission** (no EnergyRunner harness), and has no energy number yet.
+
+The official v1.4 submission data is preserved untouched at
+[`results/mlperf_tiny_v1.4_all_submissions.csv`](results/mlperf_tiny_v1.4_all_submissions.csv)
+(source: `github.com/mlcommons/tiny_results_v1.4`) — our research point lives only in the
+dashboard, clearly labeled, never mixed into the official record.
+
 ## Repository layout
 
 ```
 benchmarks/               one page per MLPerf Tiny benchmark: model, dataset, references, per-platform status
   image-classification/   keyword-spotting/   visual-wake-words/   anomaly-detection/
+dashboard/                self-contained interactive v1.4 comparison dashboard (+ our starred measured point)
 results/                  canonical result records (JSON, schema-validated) + the schema
   schema/result.schema.json
   agilex3-coredla/        records copied verbatim from the implementation repo (provenance preserved)
+  mlperf_tiny_v1.4_all_submissions.csv   official v1.4 submission set (untouched)
 implementations/          per-platform implementation repos as git submodules
   agilex_3_ai_benchmarks/ Agilex 3 CoreDLA + HyperRAM on the AXC3000
 docs/                     METHODOLOGY.md (levels, measured-only policy) · ADDING_A_PLATFORM.md
