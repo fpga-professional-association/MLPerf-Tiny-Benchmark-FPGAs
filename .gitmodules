@@ -1,0 +1,3 @@
+[submodule "implementations/agilex_3_ai_benchmarks"]
+	path = implementations/agilex_3_ai_benchmarks
+	url = https://github.com/fpga-professional-association/agilex_3_ai_benchmarks.git
