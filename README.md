@@ -10,7 +10,7 @@ software reference used to validate it).
 
 | Benchmark | Model / dataset | FP32 reference | INT8 deployed reference | On-silicon (measured) |
 |---|---|---|---|---|
-| **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.0 % top-1, 409.3 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) |
+| **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.33 % top-1 (10 000), 2,178 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) |
 | **Keyword spotting** | DS-CNN / Speech Commands | 91.86 % top-1 (4 890) | 91.72 % top-1 (4 890) | — |
 | **Visual wake words** | MobileNetV1-0.25 / VWW | 86.03 % top-1 (10 962) | 85.84 % top-1 (10 962) | — |
 | **Anomaly detection** | FC-AutoEncoder / ToyCar | 0.8760 AUC (2 459) | 0.7811 AUC (2 459) ⚠ | — |
@@ -32,7 +32,34 @@ Implementation: [`implementations/agilex_3_ai_benchmarks`](https://github.com/fp
 (submodule) — Altera FPGA AI Suite **CoreDLA** on the ~$129 Arrow **AXC3000**
 (Agilex 3 `A3CY100BM16AE7S`, no HPS, **no DDR** — fed from a 16 MB HyperRAM).
 
-First measured result (2026-07-11, `resnet8-cifar10` INT8):
+Latest measured result (2026-08-22, `resnet8-cifar10` INT8, Nios-less JTAG-hosted build —
+branch [`codex/evaluation-debug`](https://github.com/fpga-professional-association/agilex_3_ai_benchmarks/tree/codex/evaluation-debug)
+@ `54ca686`): no soft CPU — the host PC drives a JTAG-to-Avalon master via System Console; CoreDLA
+k16/c8 FP12AGX (24 DSPs in INT9 tensor mode, 128 int8 MACs/cycle), parameters MIF-baked into
+on-chip RAM (no HyperRAM, no external memory); model is the MLPerf Tiny pretrained INT8 TFLite:
+
+| Metric | Measured |
+|---|---|
+| Top-1 accuracy | **86.33 %** on the full 10 000-image CIFAR-10 test set (95 % CI 85.66–87.00; passes the 85 % closed-division floor; MLPerf reference model band 86.5–87.0 %) |
+| Engine latency (single-stream) | **527.57 µs** at 300 MHz (deterministic: 9 748/10 000 jobs bit-exact on the counter) · **459.05 µs** at the 340 MHz silicon ceiling |
+| Engine throughput | **1,895.5 fps** @ 300 MHz · **2,178.4 fps** @ 340 MHz · **2,270.7 fps** pipelined (descriptor queue ≥ 8) |
+| Compute efficiency | 6.4 fps/MHz · 61.7 % MAC utilization (23.69 of 38.4 peak GMAC/s) |
+| End-to-end (JTAG-hosted loop) | ~57–79 img/s — input-write bound, not engine bound |
+| Resources (340 MHz build) | 24,024/34,000 ALM (71 %) · 254/262 M20K (97 %) · 24/276 DSP (9 %) |
+
+Latency/fps provenance: the DLA's `jobs_active`-gated `CLOCKS_ACTIVE` CSR delta — device time from
+descriptor fetch to result written, excluding JTAG transfer by construction. Logits are bit-identical
+across the 300/340 MHz builds on the official ic01 200-image subset. 340 MHz sits 0.9 % under this
+-E7S die's Minimum-Pulse-Width limit (Restricted Fmax 342.94 MHz). The 2× k16c16 core (measured
+295.7 µs) remains blocked: it fits only via the defective `enable_on_chip_parameters` mode
+(input-invariant output — vendor escalation in the implementation repo,
+`reports/fpga_ai_streaming_egress_escalation.md`) and needs ~275 M20K with working DDR-served
+parameters vs the C100's 262. Canonical records:
+[`ph4_…full10k`](results/agilex3-coredla/ph4_resnet8-cifar10-niosless-jtag-full10k_20260822.json) ·
+[`ph4_…340mhz`](results/agilex3-coredla/ph4_resnet8-cifar10-niosless-jtag-340mhz_20260822.json).
+
+First measured result (2026-07-11, `resnet8-cifar10` INT8, HyperRAM-fed build — superseded as the
+headline but preserved as the first on-silicon proof):
 
 | Metric | Measured |
 |---|---|
@@ -75,7 +102,9 @@ to spare — the die's memory, not its arithmetic, is what's full.
 self-contained (no-CDN, open-it-locally) interactive dashboard of the **22 official MLPerf Tiny
 v1.4 submissions** (efficiency frontier, latency + energy leaderboards, per-benchmark switching),
 with our measured Agilex 3 point plotted among them as a starred (★) research entry:
-**IC engine latency 2.44 ms** (1000 ÷ 409.3 fps, the dashboard's single-stream convention).
+**IC engine latency 2.44 ms** (1000 ÷ 409.3 fps, the dashboard's single-stream convention). The
+2026-08-22 record improves this to **0.459 ms**; the dashboard star still plots the July point
+pending regeneration.
 
 Where that lands among the v1.4 FPGA entries on image classification: ahead of every closed-division
 FPGA IC submission (best: Andes AnDLA I370 at 3.87 ms on a Kintex-7); the only faster FPGA point is
