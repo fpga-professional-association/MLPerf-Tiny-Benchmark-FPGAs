@@ -9,11 +9,11 @@
     "fclk_mhz": 340,
     "model": "resnet8-cifar10",
     "quantization": "int8-tflite-mlperf-pretrained",
-    "arch_file": "fpga/ai_suite/resnet8_agx3_int8_k16c8.arch",
+    "arch_file": "models/arch/resnet8_agx3_int8_k16c8.arch",
     "bitstream_sha256": "d983a0fa78d5bd9a3de356d252456619cee812854037e41f0f3e2aaff7aea2b1",
     "report_paths": [
-      "reports/fpga_ai_speed_hunt_2026-08-21.md",
-      "reports/fpga_ai_clock_scaling_2026-08-21.md"
+      "docs/fpga_ai_speed_hunt_2026-08-21.md",
+      "docs/fpga_ai_clock_scaling_2026-08-21.md"
     ],
     "tool_versions": {
       "quartus": "26.1.0 Build 110 (Pro, Agilex 3)",
