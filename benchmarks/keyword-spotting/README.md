@@ -15,6 +15,7 @@ Commands (12-class, 4 890-record test set, top-1 accuracy). Closed-division qual
 | Platform | Accuracy | Throughput | Record |
 |---|---|---|---|
 | Agilex 3 CoreDLA (AXC3000) | *not yet measured on silicon* | — | — |
+| **Efinix Ti180 TinyML** (Ti180 J484 Dev Kit, union accel config, JTAG data feed) | **91.80 % top-1 (full 4,890)** | 116.7 fps @ 250 MHz (8.571 ms) | [`kws1_hw_accuracy`](../../results/efinix-ti180-tinyml/kws1_hw_accuracy.json) · [`kws1_hw_performance`](../../results/efinix-ti180-tinyml/kws1_hw_performance.json) |
 
 The INT8 deployed model is ready in the implementation repo (`tiny_bundles/`); the on-board run
 follows the same PH3 method proven with resnet8-cifar10.

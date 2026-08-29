@@ -23,6 +23,7 @@ run of this benchmark.
 | Platform | AUC | Throughput | Record |
 |---|---|---|---|
 | Agilex 3 CoreDLA (AXC3000) | *blocked on quantization recipe (above)* | — | — |
+| **Efinix Ti180 TinyML** (Ti180 J484 Dev Kit, Efinix INT8 quantization, on-device MSE scoring, JTAG data feed) | **0.8188 mean AUC / 0.672 pAUC (full 2,459 files, 481,964 slices)**; same-model CPU ref 0.8401 — FC-engine rounding costs 0.021 AUC (score corr 0.857), software-FC ablation in the implementation repo | 342.4 fps/slice @ 250 MHz (2.921 ms) | [`ad1_hw_accuracy`](../../results/efinix-ti180-tinyml/ad1_hw_accuracy.json) · [`ad1_hw_performance`](../../results/efinix-ti180-tinyml/ad1_hw_performance.json) |
 
 This benchmark is also the reference workload for the vendor-neutral open path in
 [fpga-ai-endpoint](https://github.com/fpga-professional-association/fpga-ai-endpoint) (pure-FC

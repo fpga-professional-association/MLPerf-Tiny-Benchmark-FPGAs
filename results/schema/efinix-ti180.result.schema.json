@@ -23,9 +23,14 @@
     },
 
     "benchmark": {
-      "description": "Workload identifier. Currently only the MLPerf Tiny image-classification closed-division task is in scope.",
+      "description": "Workload identifier: the four MLPerf Tiny closed-division tasks.",
       "type": "string",
-      "enum": ["mlperf-tiny-ic-resnet8-cifar10-int8"]
+      "enum": [
+        "mlperf-tiny-ic-resnet8-cifar10-int8",
+        "mlperf-tiny-kws-dscnn-speechcommands-int8",
+        "mlperf-tiny-vww-mobilenetv1025-coco96-int8",
+        "mlperf-tiny-ad-fcautoencoder-toycar-int8"
+      ]
     },
 
     "stage": {

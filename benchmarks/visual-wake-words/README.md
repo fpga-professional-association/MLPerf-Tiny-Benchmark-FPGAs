@@ -16,6 +16,7 @@ target: 80 % top-1.
 | Platform | Accuracy | Throughput | Record |
 |---|---|---|---|
 | Agilex 3 CoreDLA (AXC3000) | *not yet measured on silicon* | — | — |
+| **Efinix Ti180 TinyML** (Ti180 J484 Dev Kit, deploys MLCommons vww_96_int8.tflite, JTAG data feed) | **85.98 % top-1 (full 10,962)** | 98.4 fps @ 250 MHz (10.158 ms) | [`vww1_hw_accuracy`](../../results/efinix-ti180-tinyml/vww1_hw_accuracy.json) · [`vww1_hw_performance`](../../results/efinix-ti180-tinyml/vww1_hw_performance.json) |
 
 The INT8 deployed model is ready in the implementation repo (`tiny_bundles/`); the on-board run
 follows the same PH3 method proven with resnet8-cifar10.

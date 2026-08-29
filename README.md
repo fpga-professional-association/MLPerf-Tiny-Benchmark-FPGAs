@@ -11,9 +11,9 @@ software reference used to validate it).
 | Benchmark | Model / dataset | FP32 reference | INT8 deployed reference | On-silicon (measured) |
 |---|---|---|---|---|
 | **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.33 % top-1 (10 000), 2,178 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) · **88.0 % top-1 (1 000), 148.6 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
-| **Keyword spotting** | DS-CNN / Speech Commands | 91.86 % top-1 (4 890) | 91.72 % top-1 (4 890) | — |
-| **Visual wake words** | MobileNetV1-0.25 / VWW | 86.03 % top-1 (10 962) | 85.84 % top-1 (10 962) | — |
-| **Anomaly detection** | FC-AutoEncoder / ToyCar | 0.8760 AUC (2 459) | 0.7811 AUC (2 459) ⚠ | — |
+| **Keyword spotting** | DS-CNN / Speech Commands | 91.86 % top-1 (4 890) | 91.72 % top-1 (4 890) | **91.80 % top-1 (4 890), 116.7 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
+| **Visual wake words** | MobileNetV1-0.25 / VWW | 86.03 % top-1 (10 962) | 85.84 % top-1 (10 962) | **85.98 % top-1 (10 962), 98.4 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
+| **Anomaly detection** | FC-AutoEncoder / ToyCar | 0.8760 AUC (2 459) | 0.7811 AUC (2 459) ⚠ | **0.8188 mean AUC (2 459 files, full slice set), 342.4 fps engine rate** — Efinix Ti180 TinyML (own INT8 CPU ref 0.8401), [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
 
 ⚠ The AD INT8 per-tensor deployment loses significant AUC vs FP32 (0.876 → 0.781, below the
 MLPerf Tiny closed-division 0.85 target); per-channel and INT4 quantization sweeps exist in the
@@ -128,6 +128,30 @@ build is not possible on this platform. Records:
 against [`results/schema/efinix-ti180.result.schema.json`](results/schema/efinix-ti180.result.schema.json),
 carried from the implementation repo — the canonical `result.schema.json` is currently
 AXC3000-specific; schema unification is an open item).
+
+#### All four MLPerf Tiny benchmarks (2026-08-28/29)
+
+One union bitstream (conv 16×8 + FC 640×640 engines, 250 MHz timing-closed, Fmax
+275 MHz, 88.9 % XLR / 37.7 % DSP), per-benchmark harness firmware swapped over JTAG,
+data bulk-loaded to DDR over JTAG (integrity-verified at 30 MHz TCK), CLINT-only
+`Invoke()` timing. KWS/AD deploy Efinix's shipped models, which their notebooks build
+from the genuine mlcommons/tiny pipelines; VWW deploys **MLCommons' own
+`vww_96_int8.tflite`** (Efinix's person-detect model is a 96×96×1 grayscale
+non-MLPerf variant). CPU references (same deployed tflite, host CPU): KWS 91.86 %,
+VWW 86.04 %, AD 0.8401 AUC.
+
+| Benchmark | n (full test set) | Measured quality | Engine latency | Engine fps |
+|---|---|---|---|---|
+| KWS DS-CNN | 4,890 | **91.80 % top-1** (target 90 %) | 8.571 ms | 116.7 |
+| VWW MobileNetV1-0.25 | 10,962 | **85.98 % top-1** (target 80 %) | 10.158 ms | 98.4 |
+| AD FC-AutoEncoder | 2,459 files / 481,964 slices | **0.8188 mean AUC** (target 0.85; per-id [0.838, 0.884, 0.648, 0.906]) | 2.921 ms/slice | 342.4 |
+
+AD caveat (stated per the honesty policy): the board's per-file scores correlate
+0.857 with the CPU reference of the same tflite — the hardware FC engine's rounding
+across 10 chained FC layers costs 0.021 mean AUC (0.8401 → 0.8188), leaving the
+silicon number below the 0.85 target that the CPU reference clears. A software-FC
+ablation (identical bitstream, FC forced to CPU) is being measured in the
+implementation repo. Records: `results/efinix-ti180-tinyml/{kws1,vww1,ad1}_hw_*.json`.
 
 ## MLPerf Tiny v1.4 comparison dashboard
 

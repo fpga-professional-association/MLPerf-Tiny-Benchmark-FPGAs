@@ -1,0 +1,32 @@
+{
+  "kind": "measured",
+  "benchmark": "mlperf-tiny-kws-dscnn-speechcommands-int8",
+  "stage": "hw_performance",
+  "timestamp_utc": "2026-08-29T03:00:25Z",
+  "producer_script": "scripts/run_bench.py",
+  "run_host": "tcovert + Ti180 J484 Dev Kit (JTAG data, COM6 ctrl)",
+  "config": {
+    "device": "Ti180J484C4",
+    "board": "Efinix Titanium Ti180 J484 Development Kit",
+    "tool_versions": {
+      "efinity": "2026.1.132.3.9",
+      "riscv_gcc": "xPack riscv-none-elf-gcc 15.2.0-1",
+      "efinix_tinyml_repo": "96886fa (github.com/Efinix-Inc/tinyml)"
+    },
+    "clk_core_mhz": 250.0,
+    "accel_config": "tinyml_core0_define.v union: conv 16x8 STANDARD FIFO 256/144, ADD STANDARD, RS STANDARD, FC STANDARD 640x640, MUL/LR/MIN_MAX DISABLE, cache 4096, AXI_DW=512",
+    "bitstream_sha256": "242593ccbc2d0099ed21eba52f3c770e7b4a31729da51b4c9826abcb03f55557",
+    "batch_size": 1,
+    "dataset": "kws-test-4890",
+    "clint_hz": 100000000,
+    "data_transport": "JTAG bulk chunks to DDR (untimed); UART results only"
+  },
+  "metrics": {
+    "latency_ms": 8.571146271983642,
+    "latency_ms_stdev": 0.02204295273173761,
+    "n_records": 4890,
+    "fps": 116.67050920233189,
+    "throughput_total_s": 41.91290527,
+    "fps_per_mhz": 0.4666820368093275
+  }
+}
