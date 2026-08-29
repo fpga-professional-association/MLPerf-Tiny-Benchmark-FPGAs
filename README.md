@@ -146,12 +146,12 @@ VWW 86.04 %, AD 0.8401 AUC.
 | VWW MobileNetV1-0.25 | 10,962 | **85.98 % top-1** (target 80 %) | 10.158 ms | 98.4 |
 | AD FC-AutoEncoder | 2,459 files / 481,964 slices | **0.8188 mean AUC** (target 0.85; per-id [0.838, 0.884, 0.648, 0.906]) | 2.921 ms/slice | 342.4 |
 
-AD caveat (stated per the honesty policy): the board's per-file scores correlate
-0.857 with the CPU reference of the same tflite — the hardware FC engine's rounding
-across 10 chained FC layers costs 0.021 mean AUC (0.8401 → 0.8188), leaving the
-silicon number below the 0.85 target that the CPU reference clears. A software-FC
-ablation (identical bitstream, FC forced to CPU) is being measured in the
-implementation repo. Records: `results/efinix-ti180-tinyml/{kws1,vww1,ad1}_hw_*.json`.
+AD caveat, resolved by ablation: the FC-engine run's per-file scores correlate 0.857
+with the CPU reference of the same tflite; forcing FC to software (identical
+bitstream, all 481,964 slices re-measured) recovers **0.8416 mean AUC** at 0.9998
+score correlation — the 0.023-AUC gap is entirely the FC engine's arithmetic, traded
+for 5.1× speed (2.921 vs 15.011 ms/slice). Records:
+`results/efinix-ti180-tinyml/{kws1,vww1,ad1,ad_swfc}_hw_*.json`.
 
 ## MLPerf Tiny v1.4 comparison dashboard
 
