@@ -1,0 +1,40 @@
+{
+  "kind": "measured",
+  "benchmark": "mlperf-tiny-ic-resnet8-cifar10-int8",
+  "stage": "hw_performance",
+  "timestamp_utc": "2026-08-29T02:17:24Z",
+  "producer_script": "scripts/run_jtag_benchmark.py",
+  "run_host": "tcovert + Ti180 J484 Dev Kit (JTAG data, COM6 ctrl)",
+  "config": {
+    "device": "Ti180J484C4",
+    "board": "Efinix Titanium Ti180 J484 Development Kit",
+    "tool_versions": {
+      "efinity": "2026.1.132.3.9",
+      "riscv_gcc": "xPack riscv-none-elf-gcc 15.2.0-1",
+      "efinix_tinyml_repo": "96886fa (github.com/Efinix-Inc/tinyml)",
+      "tflite_micro": "vendored in Efinix tinyml repo"
+    },
+    "clk_core_mhz": 250.0,
+    "accel_config": "tinyml_core0_define.v resnet8-only: conv 16x8 STANDARD, ADD STANDARD, RS STANDARD, FC/MUL/LR/MIN_MAX DISABLE (FC in software), FIFOs 64/36, cache 4096, AXI_DW=512",
+    "bitstream_sha256": "1d91d5ff7b864d8ac75aa81bff8bd01605468031b342022f3652103e50feec6d",
+    "batch_size": 1,
+    "dataset": "cifar10-test-1000",
+    "clint_hz": 100000000,
+    "input_quant": {
+      "scale": 1.0,
+      "zero_point": -128
+    },
+    "data_transport": "JTAG bulk load to DDR (untimed); UART control only"
+  },
+  "metrics": {
+    "latency_ms": 6.73114083,
+    "latency_ms_stdev": 0.016557610052835563,
+    "latency_ms_min": 6.6631800000000005,
+    "latency_ms_max": 6.74803,
+    "n_records": 1000,
+    "fps": 148.56322654000985,
+    "throughput_total_s": 6.73114083,
+    "fps_per_mhz": 0.5942529061600395
+  },
+  "notes": "Every number from the on-chip CLINT timer around Invoke() only, summed/recorded per image across the batch. Unlike the UART harness's constant-input 'T' run, this throughput is over n distinct images. JTAG/UART transport excluded."
+}

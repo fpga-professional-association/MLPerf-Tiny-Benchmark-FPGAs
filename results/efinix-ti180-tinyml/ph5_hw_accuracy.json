@@ -1,0 +1,36 @@
+{
+  "kind": "measured",
+  "benchmark": "mlperf-tiny-ic-resnet8-cifar10-int8",
+  "stage": "hw_accuracy",
+  "timestamp_utc": "2026-08-28T23:49:35Z",
+  "producer_script": "scripts/run_hw_benchmark.py",
+  "run_host": "tcovert + Ti180 J484 Dev Kit (COM6)",
+  "config": {
+    "device": "Ti180J484C4",
+    "board": "Efinix Titanium Ti180 J484 Development Kit",
+    "tool_versions": {
+      "efinity": "2026.1.132.3.9",
+      "riscv_gcc": "xPack riscv-none-elf-gcc 15.2.0-1",
+      "efinix_tinyml_repo": "96886fa (github.com/Efinix-Inc/tinyml)",
+      "tflite_micro": "vendored in Efinix tinyml repo"
+    },
+    "clk_core_mhz": 250.0,
+    "accel_config": "tinyml_core0_define.v stock Ti180 hello_world (all layers STANDARD, CONV IN_PARALLEL=12 OUT_PARALLEL=8, cache 4096, AXI_DW=512, single core)",
+    "bitstream_sha256": "75dab6fca729708c597cd47ac47a2b1fc7a14d20b62aa9e28bc558b353fbaefb",
+    "batch_size": 1,
+    "dataset": "cifar10-test-100",
+    "clint_hz": 100000000,
+    "input_quant": {
+      "scale": 1.0,
+      "zero_point": -128
+    }
+  },
+  "metrics": {
+    "top1_pct": 88.0,
+    "n_records": 100,
+    "n_correct": 88,
+    "agreement_vs_agilex_cpu_int8": 97,
+    "agreement_note": "vs OpenVINO-quantized CPU reference of the same fp32 checkpoint (different INT8 quantization)"
+  },
+  "notes": "Fixed slice: CIFAR-10 test indices 0..n-1, same slice as the Agilex 3 campaign. Model: Efinix-quantized resnet_image_classify.tflite (MLPerf Tiny ResNet-8)."
+}

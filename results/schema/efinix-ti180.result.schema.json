@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tcovert/efinix_mlperf/results/schema.json",
+  "title": "Efinix Ti180 MLPerf Tiny benchmark result record",
+  "description": "One JSON object per benchmark result file under results/. Every number quoted in README.md, docs/, or any slide must trace back to a file validating against this schema. Estimates and measurements are distinguished by the top-level 'kind' field and may never be conflated. Adapted from the Agilex 3 campaign schema (D:/altera_demo/agilex_mlperf_demo) so records stay comparable.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "kind",
+    "benchmark",
+    "stage",
+    "timestamp_utc",
+    "producer_script",
+    "config",
+    "metrics"
+  ],
+
+  "properties": {
+    "kind": {
+      "description": "estimate = produced by a static/analytical model or a simulator. measured = produced by executing the workload and reading a real clock/counter.",
+      "enum": ["estimate", "measured"]
+    },
+
+    "benchmark": {
+      "description": "Workload identifier. Currently only the MLPerf Tiny image-classification closed-division task is in scope.",
+      "type": "string",
+      "enum": ["mlperf-tiny-ic-resnet8-cifar10-int8"]
+    },
+
+    "stage": {
+      "description": "Which point in the pipeline produced this record. 'accel_estimate' is any pre-silicon projection (analytical model, simulator, or op-latency extrapolation). 'hw_memtest' is an on-board memory-datapath integrity test that scores no inferences, so it does not require clk_core_mhz or accel_config.",
+      "type": "string",
+      "enum": [
+        "cpu_reference_fp32",
+        "cpu_reference_int8",
+        "accel_estimate",
+        "hw_memtest",
+        "hw_accuracy",
+        "hw_performance"
+      ]
+    },
+
+    "timestamp_utc": {
+      "description": "ISO-8601 UTC instant the record was produced, e.g. 2026-08-28T22:52:54Z.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    },
+
+    "producer_script": {
+      "description": "Repo-relative path of the script that wrote this file. Must not be absolute and must not escape the repo.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._][A-Za-z0-9._/-]*$",
+      "not": { "pattern": "(^|/)\\.\\.(/|$)" }
+    },
+
+    "run_host": {
+      "description": "Machine identifier the run happened on (hostname, or host+board for hardware runs). REQUIRED when kind == \"measured\".",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "notes": {
+      "description": "Free-form human commentary. Never a place to hide numbers -- anything quantitative belongs in metrics.",
+      "type": "string"
+    },
+
+    "config": {
+      "description": "Everything needed to reproduce the record.",
+      "type": "object",
+      "required": ["device", "board", "tool_versions"],
+      "properties": {
+        "device": {
+          "description": "FPGA part number, e.g. Ti180J484C4. For CPU reference stages, the CPU model string.",
+          "type": "string",
+          "minLength": 1
+        },
+        "board": {
+          "description": "Board identifier, e.g. Efinix Ti180 J484 Development Kit. Use \"n/a\" for host-CPU reference stages.",
+          "type": "string",
+          "minLength": 1
+        },
+        "tool_versions": {
+          "description": "Snapshot of the relevant toolchain versions, e.g. {\"efinity\": \"2026.1.132.3.9\", \"riscv_gcc\": \"...\", \"tflite_micro\": \"...\"}.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "string" }
+        },
+        "clk_core_mhz": {
+          "description": "Actual SoC / TinyML-accelerator core clock frequency in MHz that the hardware ran at (from the fitted/STA-signed-off design, not the requested constraint).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "accel_config": {
+          "description": "TinyML accelerator / SoC configuration identifier (accelerator parameter set, SoC config name, or config file path).",
+          "type": "string",
+          "minLength": 1
+        },
+        "bitstream_sha256": {
+          "description": "Lowercase hex SHA-256 of the exact .bit/.hex programmed onto the board.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "batch_size": { "type": "integer", "minimum": 1 },
+        "dataset": {
+          "description": "Dataset split identifier, e.g. cifar10-test-10000.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "metrics": {
+      "description": "The actual numbers. Open-ended, but the well-known keys are typed here so units can't drift.",
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "top1_pct": {
+          "description": "Top-1 accuracy in PERCENT (0-100), not a fraction.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "n_records": {
+          "description": "Number of inputs scored / inferences timed.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "fps": {
+          "description": "Inferences per second.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "latency_ms": {
+          "description": "Single-inference latency in milliseconds.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+
+  "allOf": [
+    {
+      "$comment": "measured results must name the machine they were measured on.",
+      "if": { "properties": { "kind": { "const": "measured" } }, "required": ["kind"] },
+      "then": { "required": ["run_host"] }
+    },
+    {
+      "$comment": "hw_* inference stages must pin the clock, the accelerator config, and the exact bitstream.",
+      "if": {
+        "properties": { "stage": { "enum": ["hw_accuracy", "hw_performance"] } },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "required": ["device", "board", "tool_versions",
+                         "clk_core_mhz", "accel_config", "bitstream_sha256"]
+          }
+        },
+        "required": ["config"]
+      }
+    },
+    {
+      "$comment": "accel_estimate records are specific to an accelerator configuration.",
+      "if": {
+        "properties": { "stage": { "const": "accel_estimate" } },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": { "config": { "required": ["accel_config"] } },
+        "required": ["config"]
+      }
+    }
+  ]
+}

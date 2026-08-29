@@ -10,7 +10,7 @@ software reference used to validate it).
 
 | Benchmark | Model / dataset | FP32 reference | INT8 deployed reference | On-silicon (measured) |
 |---|---|---|---|---|
-| **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.33 % top-1 (10 000), 2,178 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) |
+| **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.33 % top-1 (10 000), 2,178 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) · **88.0 % top-1 (1 000), 148.6 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
 | **Keyword spotting** | DS-CNN / Speech Commands | 91.86 % top-1 (4 890) | 91.72 % top-1 (4 890) | — |
 | **Visual wake words** | MobileNetV1-0.25 / VWW | 86.03 % top-1 (10 962) | 85.84 % top-1 (10 962) | — |
 | **Anomaly detection** | FC-AutoEncoder / ToyCar | 0.8760 AUC (2 459) | 0.7811 AUC (2 459) ⚠ | — |
@@ -97,6 +97,38 @@ standalone comes in at ALM 88 % / M20K 94 % / DSP 23 % with the DLA datapath clo
 ~343 MHz in DSP tensor mode, so the deployed 200 MHz build has thermal/timing headroom and DSPs
 to spare — the die's memory, not its arithmetic, is what's full.
 
+### Efinix Titanium Ti180 + TinyML (Ti180 J484 Dev Kit)
+
+Implementation: [`implementations/efinix_ti180_ai_benchmarks`](https://github.com/fpga-professional-association/efinix_ti180_ai_benchmarks)
+(submodule) — the **Efinix TinyML platform** (Sapphire RISC-V + TinyML layer-engine
+accelerator, Efinity 2026.1) on the Efinix **Ti180 J484 Development Kit**
+(`Ti180J484C4`, 172.8K XLR, 1 GB LPDDR4x on the hardened controller).
+
+Measured result (2026-08-28, `resnet8-cifar10` INT8, ResNet-8-only accelerator config —
+conv 16×8, unused MUL/LR/MIN_MAX/FC engines stripped, FC in software; JTAG bulk data feed
+to DDR, UART control only):
+
+| Metric | Measured |
+|---|---|
+| Top-1 accuracy | **88.0 %** (880/1000, CIFAR-10 test 0–999; ~±1 % SE) — Efinix-quantized INT8 of the MLCommons checkpoint; 956/1000 argmax agreement with the OpenVINO-INT8 reference |
+| Engine latency | **6.731 ms** (sd 0.017, n=1000) at 250 MHz (timing-closed, Fmax 264 MHz) |
+| Engine throughput | **148.6 fps** over 1000 distinct images (0.59 fps/MHz) — matches constant-input loop within 1 % |
+| vs stock accelerator config | 1.41× (stock six-app superset: 9.379 ms / 106.6 fps, same accuracy) |
+| Resources (16×8 build) | 141,713/172,800 XLR (82 %) · 556/1,280 RAM (43 %) · 177/640 DSP (28 %) |
+
+Provenance: RISC-V CLINT counter around `Invoke()` only — JTAG/UART transport excluded by
+construction; bitstream SHA-256 + tool versions in every record. Optimization findings from
+on-silicon per-layer profiling: conv = 89 % of time at ~5 % MAC-array utilization (cost is
+channel *passes*, not MACs); parallelism ceiling is empirical (16×12 fails packing at
+178,747/172,800 XLRs, 16×16-without-FC at 194,385). Architectural note: unlike CoreDLA,
+the TinyML accelerator is layer engines sequenced by TFLite Micro on the RISC-V (closed-lib
+custom instructions), so the CPU is part of the engine, not a removable host — a "no-CPU"
+build is not possible on this platform. Records:
+[`results/efinix-ti180-tinyml/`](results/efinix-ti180-tinyml/) (dialect: these validate
+against [`results/schema/efinix-ti180.result.schema.json`](results/schema/efinix-ti180.result.schema.json),
+carried from the implementation repo — the canonical `result.schema.json` is currently
+AXC3000-specific; schema unification is an open item).
+
 ## MLPerf Tiny v1.4 comparison dashboard
 
 [`dashboard/mlperf_tiny_v1.4_dashboard.html`](dashboard/mlperf_tiny_v1.4_dashboard.html) — a
@@ -127,9 +159,11 @@ dashboard/                self-contained interactive v1.4 comparison dashboard (
 results/                  canonical result records (JSON, schema-validated) + the schema
   schema/result.schema.json
   agilex3-coredla/        records copied verbatim from the implementation repo (provenance preserved)
+  efinix-ti180-tinyml/    records copied verbatim from the Efinix Ti180 implementation repo
   mlperf_tiny_v1.4_all_submissions.csv   official v1.4 submission set (untouched)
 implementations/          per-platform implementation repos as git submodules
   agilex_3_ai_benchmarks/ Agilex 3 CoreDLA + HyperRAM on the AXC3000
+  efinix_ti180_ai_benchmarks/ Efinix TinyML (Sapphire RISC-V + layer engines) on the Ti180 J484 kit
 docs/                     METHODOLOGY.md (levels, measured-only policy) · ADDING_A_PLATFORM.md
 ```
 

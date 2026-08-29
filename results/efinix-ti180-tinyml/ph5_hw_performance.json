@@ -1,0 +1,42 @@
+{
+  "kind": "measured",
+  "benchmark": "mlperf-tiny-ic-resnet8-cifar10-int8",
+  "stage": "hw_performance",
+  "timestamp_utc": "2026-08-28T23:49:35Z",
+  "producer_script": "scripts/run_hw_benchmark.py",
+  "run_host": "tcovert + Ti180 J484 Dev Kit (COM6)",
+  "config": {
+    "device": "Ti180J484C4",
+    "board": "Efinix Titanium Ti180 J484 Development Kit",
+    "tool_versions": {
+      "efinity": "2026.1.132.3.9",
+      "riscv_gcc": "xPack riscv-none-elf-gcc 15.2.0-1",
+      "efinix_tinyml_repo": "96886fa (github.com/Efinix-Inc/tinyml)",
+      "tflite_micro": "vendored in Efinix tinyml repo"
+    },
+    "clk_core_mhz": 250.0,
+    "accel_config": "tinyml_core0_define.v stock Ti180 hello_world (all layers STANDARD, CONV IN_PARALLEL=12 OUT_PARALLEL=8, cache 4096, AXI_DW=512, single core)",
+    "bitstream_sha256": "75dab6fca729708c597cd47ac47a2b1fc7a14d20b62aa9e28bc558b353fbaefb",
+    "batch_size": 1,
+    "dataset": "cifar10-test-100",
+    "clint_hz": 100000000,
+    "input_quant": {
+      "scale": 1.0,
+      "zero_point": -128
+    }
+  },
+  "metrics": {
+    "latency_ms": 9.3788837,
+    "latency_ms_stdev": 0.012198011235070598,
+    "latency_ms_min": 9.33292,
+    "latency_ms_max": 9.3892,
+    "n_records": 100,
+    "fps": 106.56926133873814,
+    "throughput_invokes": 500,
+    "throughput_total_s": 4.69178442,
+    "fps_per_mhz": 0.4262770453549526,
+    "end_to_end_uart_fps": 3.472596961251666,
+    "end_to_end_note": "host-limited by 115200-baud UART input path; not an engine number"
+  },
+  "notes": "latency_ms = mean CLINT-timer delta around Invoke() only, per single inference over the accuracy slice. fps = N back-to-back Invoke() calls timed on-chip (input constant; UART excluded)."
+}
