@@ -8,20 +8,38 @@ software reference used to validate it).
 
 ## Results matrix
 
-| Benchmark | Model / dataset | FP32 reference | INT8 deployed reference | On-silicon (measured) |
+Software references (full test sets, OpenVINO/NNCF toolchain unless noted):
+
+| Benchmark | Model / dataset | n | FP32 reference | INT8 deployed reference | MLPerf quality target |
+|---|---|---|---|---|---|
+| **IC** — image classification | ResNet-8 / CIFAR-10 | 10 000 | 87.19 % top-1 | 86.64 % top-1 | 85 % |
+| **KWS** — keyword spotting | DS-CNN / Speech Commands | 4 890 | 91.86 % top-1 | 91.72 % top-1 | 90 % |
+| **VWW** — visual wake words | MobileNetV1-0.25 / VWW | 10 962 | 86.03 % top-1 | 85.84 % top-1 | 80 % |
+| **AD** — anomaly detection | FC-AutoEncoder / ToyCar | 2 459 files | 0.8760 AUC | 0.7811 AUC ⚠ | 0.85 AUC |
+
+Measured on silicon — one row per dev kit (quality on the stated test-set size · engine
+rate; engine rates are on-chip-counter measurements that exclude the host data path by
+construction):
+
+| Dev kit — platform | IC ResNet-8 | KWS DS-CNN | VWW MobileNetV1-0.25 | AD FC-AutoEncoder |
 |---|---|---|---|---|
-| **Image classification** | ResNet-8 / CIFAR-10 | 87.19 % top-1 (10 000) | 86.64 % top-1 (10 000) | **86.33 % top-1 (10 000), 2,178 fps engine rate** — Agilex 3 CoreDLA, [details ↓](#agilex-3--coredla-arrow-axc3000) · **88.0 % top-1 (1 000), 148.6 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
-| **Keyword spotting** | DS-CNN / Speech Commands | 91.86 % top-1 (4 890) | 91.72 % top-1 (4 890) | **91.80 % top-1 (4 890), 116.7 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
-| **Visual wake words** | MobileNetV1-0.25 / VWW | 86.03 % top-1 (10 962) | 85.84 % top-1 (10 962) | **85.98 % top-1 (10 962), 98.4 fps engine rate** — Efinix Ti180 TinyML, [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
-| **Anomaly detection** | FC-AutoEncoder / ToyCar | 0.8760 AUC (2 459) | 0.7811 AUC (2 459) ⚠ | **0.8188 mean AUC (2 459 files, full slice set), 342.4 fps engine rate** — Efinix Ti180 TinyML (own INT8 CPU ref 0.8401), [details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit) |
+| **Arrow AXC3000** — Agilex 3 CoreDLA ([details ↓](#agilex-3--coredla-arrow-axc3000)) | **86.33 %** (full 10 000) · 2 178 fps @ 340 MHz | — | — | — |
+| **Efinix Ti180 J484 Dev Kit** — TinyML platform ([details ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit)) | **88.0 %** (n=1 000) · 148.6 fps @ 250 MHz | **91.80 %** (full 4 890) · 116.7 fps | **85.98 %** (full 10 962) · 98.4 fps | **0.8188 AUC** (full 2 459 files) · 342.4 fps/slice — 0.8416 AUC with software FC ([why ↓](#efinix-titanium-ti180--tinyml-ti180-j484-dev-kit)) |
 
-⚠ The AD INT8 per-tensor deployment loses significant AUC vs FP32 (0.876 → 0.781, below the
-MLPerf Tiny closed-division 0.85 target); per-channel and INT4 quantization sweeps exist in the
+Cell notes: the Ti180 KWS/AD rows deploy Efinix's INT8 quantizations of the MLPerf
+checkpoints (their own CPU references: KWS 91.86 %, AD 0.8401 AUC); the Ti180 VWW row
+deploys MLCommons' reference `vww_96_int8.tflite`; the Agilex IC row deploys the MLPerf
+pretrained INT8 TFLite. Quality cells are directly comparable to the reference table
+above; n is stated wherever a run is not the full test set.
+
+⚠ The AD INT8 per-tensor OpenVINO deployment loses significant AUC vs FP32
+(0.876 → 0.781, below the 0.85 target); per-channel and INT4 sweeps exist in the
 Agilex 3 repo (`results/l5_quant-sweep_ad-toycar-*.json`) — see
-[benchmarks/anomaly-detection](benchmarks/anomaly-detection/README.md).
+[benchmarks/anomaly-detection](benchmarks/anomaly-detection/README.md). The Efinix
+quantization of the same checkpoint holds 0.8401 (CPU) / 0.8416 (silicon, software FC).
 
-References were produced with the same toolchain that deploys to the FPGA (OpenVINO/NNCF PTQ), so
-the reference column is the honest comparison point for the silicon column. Full records with
+Each reference was produced with a toolchain that deploys to an FPGA in this repo, so the
+reference table is the honest comparison point for the silicon matrix. Full records with
 provenance (bitstream SHA-256, tool versions, report paths) live in [`results/`](results/).
 
 ## Platforms
